@@ -7,6 +7,12 @@ const config = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
+  physics: {
+    default: "arcade",
+    arcade: {
+      debug: false,
+    },
+  },
   scene: {
     preload: preload,
     create: create,
@@ -24,9 +30,8 @@ function preload() {
 
 function create() {
   ball = this.add.sprite(50, 50, "ball");
+  this.physics.add.existing(ball);
+  ball.body.setVelocity(150, 150);
 }
 
-function update() {
-  ball.x += 1;
-  ball.y += 1;
-}
+function update() {}
