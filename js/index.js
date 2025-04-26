@@ -1,21 +1,32 @@
-const game = new Phaser.Game(480, 320, Phaser.CANVAS, null, {
-  preload,
-  create,
-  update,
-});
+const config = {
+  type: Phaser.AUTO,
+  width: 480,
+  height: 320,
+  backgroundColor: "#eee",
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
+  scene: {
+    preload: preload,
+    create: create,
+    update: update,
+  },
+};
+
+const game = new Phaser.Game(config);
 
 let ball;
 
 function preload() {
-  game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-  game.scale.pageAlignHorizontally = true;
-  game.scale.pageAlignVertically = true;
-  game.stage.backgroundColor = "#eee";
-  game.load.image("ball", "img/ball.png");
+  this.load.image("ball", "img/ball.png");
 }
 
 function create() {
-  ball = game.add.sprite(50, 50, "ball");
+  ball = this.add.sprite(50, 50, "ball");
 }
 
-function update() {}
+function update() {
+  ball.x += 1;
+  ball.y += 1;
+}
