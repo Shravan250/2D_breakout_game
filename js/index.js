@@ -43,7 +43,10 @@ const config = {
 const game = new Phaser.Game(config);
 
 function preload() {
-  this.load.image("ball", "img/ball.png");
+  this.load.spritesheet("ball", "img/wobble.png", {
+    frameWidth: 20,
+    frameHeight: 20,
+  });
   this.load.image("paddle", "img/paddle.png");
   this.load.image("brick", "img/brick.png");
 }

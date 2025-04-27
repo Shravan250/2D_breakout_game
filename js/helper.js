@@ -9,9 +9,10 @@ export let score = 0;
 export let lives = 3;
 export let livesText;
 export let lifeLostText;
+export let gameOver = false;
 
 // Constants
-export const BALL_SPEED = 150;
+export const BALL_SPEED = 250;
 export const MAX_BOUNCE_ANGLE = Math.PI / 3; // 60 degrees
 export const MIN_BOUNCE_ANGLE = 0.1; // ~5.7 degrees
 
@@ -32,6 +33,15 @@ export function createBall(scene) {
     scene.game.config.height - 50,
     "ball"
   );
+  // Create the wobble animation
+  scene.anims.create({
+    key: "wobble",
+    frames: scene.anims.generateFrameNumbers("ball", {
+      frames: [0, 1, 0, 2, 0, 1, 0, 2, 0],
+    }),
+    frameRate: 24,
+  });
+
   ball.setOrigin(0.5);
   ball.body.setCollideWorldBounds(true);
   ball.body.setBounce(1, 1);
@@ -73,7 +83,7 @@ export function createLivesText(scene) {
 export function setupCollisions(scene) {
   ball.body.onWorldBounds = true;
   scene.physics.world.on("worldbounds", (body) => {
-    handleWorldBoundsCollision(body, scene);
+    handleWorldBoundsCollision(ball, body, scene);
   });
   scene.physics.add.collider(ball, paddle, handlePaddleCollision);
 }
@@ -83,6 +93,7 @@ export function setupInput(scene) {
   scene.input.on(
     "pointermove",
     (pointer) => {
+      if (gameOver) return;
       paddle.x = Phaser.Math.Clamp(
         pointer.x,
         paddle.width / 2,
@@ -94,16 +105,18 @@ export function setupInput(scene) {
 }
 
 // Handle world bounds collision
-function handleWorldBoundsCollision(body, scene) {
+function handleWorldBoundsCollision(ball, body, scene) {
   if (body.gameObject === ball && body.blocked.down) {
     lives -= 1;
     livesText.setText(`Lives: ${lives}`);
     if (lives === 0) {
+      ball.setVelocity(0, 0);
       lifeLostText.visible = true;
       lifeLostText.setInteractive();
       lifeLostText.on("pointerdown", () => {
         location.reload();
       });
+      gameOver = true;
     } else {
       ball.setPosition(
         scene.game.config.width * 0.5,
@@ -116,6 +129,7 @@ function handleWorldBoundsCollision(body, scene) {
 
 // Handle paddle collision
 function handlePaddleCollision(ball, paddle) {
+  ball.play("wobble");
   const relativeIntersectX = (ball.x - paddle.x) / (paddle.displayWidth / 2);
   const clampX = Phaser.Math.Clamp(relativeIntersectX, -1, 1);
 
@@ -170,14 +184,26 @@ export function initBricks(scene) {
 
 // Handle brick collision
 function handleBallBrickCollision(ball, brick) {
-  brick.disableBody(true, true);
-  score += 10;
-  scoreText.setText(`Points: ${score}`);
+  ball.play("wobble");
 
-  if (bricks.countActive() === 0) {
-    alert("You win!");
-    location.reload();
-  }
+  // Create a tween for the brick's scale
+  brick.scene.tweens.add({
+    targets: brick,
+    scaleX: 0,
+    scaleY: 0,
+    duration: 200,
+    ease: "Linear",
+    onComplete: () => {
+      brick.destroy();
+      score += 10;
+      scoreText.setText(`Points: ${score}`);
+
+      if (bricks.countActive() === 0) {
+        alert("You win!");
+        location.reload();
+      }
+    },
+  });
 
   let vx = ball.body.velocity.x;
   let vy = ball.body.velocity.y;
