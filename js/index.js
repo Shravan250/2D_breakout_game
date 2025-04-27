@@ -60,6 +60,15 @@ function create() {
   ball.body.setBounce(1, 1);
   ball.body.setVelocity(150, 150);
 
+  // Listen for when ball hits the bottom edge
+  ball.body.onWorldBounds = true;
+  this.physics.world.on("worldbounds", function (body) {
+    if (body.gameObject === ball && body.blocked.down) {
+      alert("Game Over!");
+      location.reload();
+    }
+  });
+
   // Add collision between ball and paddle
   this.physics.add.collider(ball, paddle);
 
