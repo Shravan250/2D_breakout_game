@@ -36,7 +36,6 @@ let paddle;
 let bricks;
 let newBrick;
 let brickInfo;
-
 function preload() {
   this.load.image("ball", "img/ball.png");
   this.load.image("paddle", "img/paddle.png");
@@ -62,7 +61,8 @@ function create() {
   ball.setOrigin(0.5);
   ball.body.setCollideWorldBounds(true);
   ball.body.setBounce(1, 1);
-  ball.body.setVelocity(150, 150);
+  ball.body.setVelocity(150, -150);
+  ball.initialSpeed = Math.hypot(150, -150);
 
   // Listen for when ball hits the bottom edge
   ball.body.onWorldBounds = true;
@@ -74,7 +74,35 @@ function create() {
   });
 
   // Add collision between ball and paddle
-  this.physics.add.collider(ball, paddle);
+  this.physics.add.collider(ball, paddle, (ball, paddle) => {
+    // How far from the paddle’s center did the ball hit?
+    // -1 = extreme left, +1 = extreme right
+    const relativeIntersectX = (ball.x - paddle.x) / (paddle.displayWidth / 2);
+
+    // Clamp to [-1, 1]
+    const clampX = Phaser.Math.Clamp(relativeIntersectX, -1, 1);
+
+    // Map to a max bounce angle (e.g. 60° / π/3)
+    const maxBounce = Math.PI / 3;
+    let bounceAngle = clampX * maxBounce;
+
+    // Avoid nearly-zero angles (prevents straight vertical)
+    const minAngle = 0.1; // ~5.7°
+    if (Math.abs(bounceAngle) < minAngle) {
+      bounceAngle = bounceAngle < 0 ? -minAngle : minAngle;
+    }
+
+    // tiny random tweak to avoid repetitive paths
+    bounceAngle += Phaser.Math.FloatBetween(-0.1, 0.1);
+
+    // Recompute velocity components,
+    // always sending the ball **upwards** (negative Y)
+    const speed = ball.initialSpeed;
+    const vx = speed * Math.sin(bounceAngle);
+    const vy = -Math.abs(speed * Math.cos(bounceAngle));
+
+    ball.body.setVelocity(vx, vy);
+  });
 
   //Enable pointer input
   this.input.on(
@@ -93,7 +121,17 @@ function create() {
   initBricks(this);
 }
 
-function update() {}
+function update() {
+  const targetSpeed = 300;
+  let { x: vx, y: vy } = ball.body.velocity;
+  const current = Math.hypot(vx, vy);
+  if (current > 0) {
+    ball.body.setVelocity(
+      (vx / current) * targetSpeed,
+      (vy / current) * targetSpeed
+    );
+  }
+}
 
 function initBricks(scene) {
   brickInfo = {
@@ -124,4 +162,38 @@ function initBricks(scene) {
       bricks.add(newBrick);
     }
   }
+
+  scene.physics.add.collider(ball, bricks, handleBallBrickCollision);
+}
+
+function handleBallBrickCollision(ball, bricks) {
+  bricks.disableBody(true, true);
+
+  //current velocity
+  let vx = ball.body.velocity.x;
+  let vy = ball.body.velocity.y;
+
+  //Compute overlaps to detect which face was hit
+  const overlapX = Math.abs(ball.x - bricks.x) - bricks.displayWidth / 2;
+  const overlapY = Math.abs(ball.y - bricks.y) - bricks.displayHeight / 2;
+
+  if (overlapX > overlapY) {
+    // Hit left/right face → flip X
+    vx = -vx;
+  } else {
+    // Hit top/bottom face → flip Y
+    vy = -vy;
+  }
+
+  // Build a fresh angle, then nudge it slightly
+  let angle = Math.atan2(vy, vx);
+  // avoid exact 0/90° trajectories by adding a small random tweak
+  angle += Phaser.Math.FloatBetween(-1, 1);
+
+  // Re-normalize to your stored initial speed
+  const speed = ball.initialSpeed;
+  const newVx = Math.cos(angle) * speed;
+  const newVy = Math.sin(angle) * speed;
+
+  ball.body.setVelocity(newVx, newVy);
 }
