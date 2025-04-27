@@ -6,6 +6,9 @@ export let newBrick;
 export let brickInfo;
 export let scoreText;
 export let score = 0;
+export let lives = 3;
+export let livesText;
+export let lifeLostText;
 
 // Constants
 export const BALL_SPEED = 150;
@@ -14,8 +17,8 @@ export const MIN_BOUNCE_ANGLE = 0.1; // ~5.7 degrees
 
 export function createPaddle(scene) {
   paddle = scene.physics.add.sprite(
-    scene.sys.game.config.width * 0.5,
-    scene.sys.game.config.height - 5,
+    scene.game.config.width * 0.5,
+    scene.game.config.height - 5,
     "paddle"
   );
   paddle.setOrigin(0.5, 1);
@@ -25,8 +28,8 @@ export function createPaddle(scene) {
 // Create ball
 export function createBall(scene) {
   ball = scene.physics.add.sprite(
-    scene.sys.game.config.width * 0.5,
-    scene.sys.game.config.height - 50,
+    scene.game.config.width * 0.5,
+    scene.game.config.height - 50,
     "ball"
   );
   ball.setOrigin(0.5);
@@ -44,10 +47,34 @@ export function createScoreText(scene) {
   });
 }
 
+// Create lives text
+export function createLivesText(scene) {
+  livesText = scene.add.text(
+    scene.game.config.width - 5,
+    5,
+    `Lives: ${lives}`,
+    {
+      font: "18px Arial",
+      fill: "#0095DD",
+    }
+  );
+  livesText.setOrigin(1, 0);
+  lifeLostText = scene.add.text(
+    scene.game.config.width * 0.5,
+    scene.game.config.height * 0.5,
+    "Life lost, click to continue",
+    { font: "18px Arial", fill: "#0095DD" }
+  );
+  lifeLostText.setOrigin(0.5);
+  lifeLostText.visible = false;
+}
+
 // Setup collisions
 export function setupCollisions(scene) {
   ball.body.onWorldBounds = true;
-  scene.physics.world.on("worldbounds", handleWorldBoundsCollision);
+  scene.physics.world.on("worldbounds", (body) => {
+    handleWorldBoundsCollision(body, scene);
+  });
   scene.physics.add.collider(ball, paddle, handlePaddleCollision);
 }
 
@@ -59,7 +86,7 @@ export function setupInput(scene) {
       paddle.x = Phaser.Math.Clamp(
         pointer.x,
         paddle.width / 2,
-        scene.sys.game.config.width - paddle.width / 2
+        scene.game.config.width - paddle.width / 2
       );
     },
     scene
@@ -67,10 +94,23 @@ export function setupInput(scene) {
 }
 
 // Handle world bounds collision
-function handleWorldBoundsCollision(body) {
+function handleWorldBoundsCollision(body, scene) {
   if (body.gameObject === ball && body.blocked.down) {
-    alert("Game Over!");
-    location.reload();
+    lives -= 1;
+    livesText.setText(`Lives: ${lives}`);
+    if (lives === 0) {
+      lifeLostText.visible = true;
+      lifeLostText.setInteractive();
+      lifeLostText.on("pointerdown", () => {
+        location.reload();
+      });
+    } else {
+      ball.setPosition(
+        scene.game.config.width * 0.5,
+        scene.game.config.height - 50
+      );
+      ball.body.setVelocity(BALL_SPEED, -BALL_SPEED);
+    }
   }
 }
 
@@ -133,6 +173,11 @@ function handleBallBrickCollision(ball, brick) {
   brick.disableBody(true, true);
   score += 10;
   scoreText.setText(`Points: ${score}`);
+
+  if (bricks.countActive() === 0) {
+    alert("You win!");
+    location.reload();
+  }
 
   let vx = ball.body.velocity.x;
   let vy = ball.body.velocity.y;

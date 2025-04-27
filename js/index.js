@@ -6,6 +6,7 @@ import {
   initBricks,
   ball,
   createScoreText,
+  createLivesText,
 } from "./helper.js";
 
 const config = {
@@ -51,6 +52,7 @@ function create() {
   createPaddle(this);
   createBall(this);
   createScoreText(this);
+  createLivesText(this);
   setupCollisions(this);
   setupInput(this);
   initBricks(this);
