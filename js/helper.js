@@ -4,6 +4,8 @@ export let paddle;
 export let bricks;
 export let newBrick;
 export let brickInfo;
+export let scoreText;
+export let score = 0;
 
 // Constants
 export const BALL_SPEED = 150;
@@ -32,6 +34,14 @@ export function createBall(scene) {
   ball.body.setBounce(1, 1);
   ball.body.setVelocity(BALL_SPEED, -BALL_SPEED);
   ball.initialSpeed = Math.hypot(BALL_SPEED, -BALL_SPEED);
+}
+
+// Create score text
+export function createScoreText(scene) {
+  scoreText = scene.add.text(5, 5, `Points: ${score}`, {
+    font: "18px Arial",
+    fill: "#0095DD",
+  });
 }
 
 // Setup collisions
@@ -121,6 +131,8 @@ export function initBricks(scene) {
 // Handle brick collision
 function handleBallBrickCollision(ball, brick) {
   brick.disableBody(true, true);
+  score += 10;
+  scoreText.setText(`Points: ${score}`);
 
   let vx = ball.body.velocity.x;
   let vy = ball.body.velocity.y;
@@ -135,7 +147,7 @@ function handleBallBrickCollision(ball, brick) {
   }
 
   let angle = Math.atan2(vy, vx);
-  angle += Phaser.Math.FloatBetween(-0.1, 0.1);
+  angle += Phaser.Math.FloatBetween(-1, 1);
 
   const speed = ball.initialSpeed;
   const newVx = Math.cos(angle) * speed;

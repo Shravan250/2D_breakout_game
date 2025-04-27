@@ -5,6 +5,7 @@ import {
   setupInput,
   initBricks,
   ball,
+  createScoreText,
 } from "./helper.js";
 
 const config = {
@@ -49,6 +50,7 @@ function preload() {
 function create() {
   createPaddle(this);
   createBall(this);
+  createScoreText(this);
   setupCollisions(this);
   setupInput(this);
   initBricks(this);
