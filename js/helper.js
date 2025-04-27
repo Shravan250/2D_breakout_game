@@ -10,12 +10,30 @@ export let lives = 3;
 export let livesText;
 export let lifeLostText;
 export let gameOver = false;
+let playing = false;
+let startButton;
 
 // Constants
 export const BALL_SPEED = 250;
 export const MAX_BOUNCE_ANGLE = Math.PI / 3; // 60 degrees
 export const MIN_BOUNCE_ANGLE = 0.1; // ~5.7 degrees
 
+// Create start button
+export function createStartButton(scene) {
+  startButton = scene.add.sprite(
+    scene.game.config.width * 0.5,
+    scene.game.config.height * 0.5,
+    "button"
+  );
+  startButton.setInteractive();
+  startButton.on("pointerdown", () => {
+    playing = true;
+    startButton.destroy();
+    ball.body.setVelocity(BALL_SPEED, -BALL_SPEED);
+  });
+}
+
+// Create paddle
 export function createPaddle(scene) {
   paddle = scene.physics.add.sprite(
     scene.game.config.width * 0.5,
@@ -45,7 +63,7 @@ export function createBall(scene) {
   ball.setOrigin(0.5);
   ball.body.setCollideWorldBounds(true);
   ball.body.setBounce(1, 1);
-  ball.body.setVelocity(BALL_SPEED, -BALL_SPEED);
+  ball.body.setVelocity(0, 0);
   ball.initialSpeed = Math.hypot(BALL_SPEED, -BALL_SPEED);
 }
 
@@ -93,7 +111,7 @@ export function setupInput(scene) {
   scene.input.on(
     "pointermove",
     (pointer) => {
-      if (gameOver) return;
+      if (!playing || gameOver) return;
       paddle.x = Phaser.Math.Clamp(
         pointer.x,
         paddle.width / 2,

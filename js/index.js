@@ -7,6 +7,7 @@ import {
   ball,
   createScoreText,
   createLivesText,
+  createStartButton,
 } from "./helper.js";
 
 const config = {
@@ -49,9 +50,14 @@ function preload() {
   });
   this.load.image("paddle", "img/paddle.png");
   this.load.image("brick", "img/brick.png");
+  this.load.spritesheet("button", "img/button.png", {
+    frameWidth: 120,
+    frameHeight: 40,
+  });
 }
 
 function create() {
+  createStartButton(this);
   createPaddle(this);
   createBall(this);
   createScoreText(this);
