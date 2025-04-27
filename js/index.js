@@ -11,6 +11,15 @@ const config = {
     default: "arcade",
     arcade: {
       debug: false,
+      gravity: { y: 0 },
+      fps: 60,
+      enableBody: true,
+      checkCollision: {
+        up: true,
+        down: true,
+        left: true,
+        right: true,
+      },
     },
   },
   scene: {
@@ -29,8 +38,10 @@ function preload() {
 }
 
 function create() {
-  ball = this.add.sprite(50, 50, "ball");
-  this.physics.add.existing(ball);
+  ball = this.physics.add.sprite(240, 160, "ball");
+  ball.body.setCollideWorldBounds(true);
+  ball.body.setBounce(1, 1);
+
   ball.body.setVelocity(150, 150);
 }
 
