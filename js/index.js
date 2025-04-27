@@ -33,10 +33,14 @@ const game = new Phaser.Game(config);
 
 let ball;
 let paddle;
+let bricks;
+let newBrick;
+let brickInfo;
 
 function preload() {
   this.load.image("ball", "img/ball.png");
   this.load.image("paddle", "img/paddle.png");
+  this.load.image("brick", "img/brick.png");
 }
 
 function create() {
@@ -84,6 +88,40 @@ function create() {
     },
     this
   );
+
+  //initilize bricks
+  initBricks(this);
 }
 
 function update() {}
+
+function initBricks(scene) {
+  brickInfo = {
+    width: 50,
+    height: 20,
+    count: {
+      row: 3,
+      col: 7,
+    },
+    offset: {
+      top: 50,
+      left: 60,
+    },
+    padding: 10,
+  };
+
+  bricks = scene.physics.add.group();
+
+  for (let c = 0; c < brickInfo.count.col; c++) {
+    for (let r = 0; r < brickInfo.count.row; r++) {
+      let brickX =
+        brickInfo.offset.left + c * (brickInfo.width + brickInfo.padding);
+      let brickY =
+        brickInfo.offset.top + r * (brickInfo.height + brickInfo.padding);
+      newBrick = scene.physics.add.sprite(brickX, brickY, "brick");
+      newBrick.setImmovable(true);
+      newBrick.setOrigin(0.5);
+      bricks.add(newBrick);
+    }
+  }
+}
